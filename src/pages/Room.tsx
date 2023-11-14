@@ -8,7 +8,18 @@ import { Chat } from "../components/chat/Chat"
 
 export const Room = () => {
     const { roomId } = useParams()
-    const { ws, user, stream, peers, shareScreen, shareScreenId, isSharingScreen, setRoomId } = useContext(RoomContext)
+    const { 
+        ws, 
+        user, 
+        stream, 
+        peers, 
+        chats,
+        shareScreen, 
+        shareScreenId, 
+        isSharingScreen, 
+        setRoomId, 
+        toggleChat,
+    } = useContext(RoomContext)
 
     useEffect(() => {
         user?.on("open", () => {
@@ -43,13 +54,16 @@ export const Room = () => {
                         })
                     }
                 </div>
-                <div className="border-l-2 pb-28">
-                    <Chat />
-                </div>
+                {
+                    chats.isChatOpen &&
+                    <div className="border-l-2 pb-28">
+                        <Chat />
+                    </div>
+                }
             </div>
             <div className="h-28 fixed bottom-0 p-6 w-full flex items-center justify-center border-t-2 bg-white">
                 <ShareScreenButton onClick={shareScreen}/>
-                <ChatButton onClick={() => {}}/>
+                <ChatButton onClick={toggleChat}/>
             </div>
         </div>
     )

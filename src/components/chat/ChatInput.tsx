@@ -1,10 +1,18 @@
-import { useState } from "react"
+import { useContext, useState } from "react"
+import { RoomContext } from "../../context/RoomContext"
 
 export const ChatInput: React.FC = ({}) => {
     const [message, setMessage] = useState<string>("")
+    const { sendMessage } = useContext(RoomContext)
     return(
         <div>
-            <form> 
+            <form onSubmit={(e) => {
+                e.preventDefault()
+                if(message){
+                    sendMessage(message)
+                    setMessage('')
+                }
+            }}> 
                 <div className="flex">
                     <textarea 
                         className="border rounded"

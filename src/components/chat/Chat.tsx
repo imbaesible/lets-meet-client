@@ -1,30 +1,17 @@
+import { useContext } from "react"
 import { IMessage } from "../../types/Chat"
 import { ChatBubble } from "./ChatBubble"
 import { ChatInput } from "./ChatInput"
+import { RoomContext } from "../../context/RoomContext"
 
 export const Chat: React.FC = ({}) => {
-    const messages: IMessage[] = [
-        {
-            content: 'Message 1',
-            author: '',
-            timestamp: '',
-        },
-        {
-            content: 'Message 2',
-            author: '',
-            timestamp: '',
-        },
-        {
-            content: 'Message 3',
-            author: '',
-            timestamp: '',
-        },
-    ]
+    const { chats } = useContext(RoomContext)
+
     return(
         <div className="flex flex-col h-full justify-between">
             <div>
                 {
-                    messages.map((message) => {
+                    chats.messages?.map((message: IMessage) => {
                         return(
                             <ChatBubble message={message}/>
                         )
