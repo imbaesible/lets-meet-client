@@ -1,10 +1,13 @@
 import { createContext, useEffect, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socketIOClient from "socket.io-client";
-import Peer, { PeerConnectOption } from "peerjs";
+import Peer from "peerjs";
 import { v4 as uuidV4 } from "uuid";
-import { peersReducer } from "./peerReducer";
-import { addPeerAction, removePeerAction } from "./peerActions";
+import { peersReducer } from "../reducers/peerReducer";
+import { addPeerAction, removePeerAction } from "../reducers/peerActions";
+import { IMessage } from "../types/Chat";
+import { chatReducer } from "../reducers/chatReducer";
+import { addHistoryAction, addMessageAction, toggleChatAction } from "../reducers/chatActions";
 const WS = 'http://localhost:8080'
 
 export const RoomContext = createContext<null | any>(null)
@@ -20,6 +23,10 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
     const [user, setUser] = useState<Peer>()
     const [stream, setStream] = useState<MediaStream>()
     const [peers, dispatch] = useReducer(peersReducer, {})
+    const [chats, chatDispatch] = useReducer(chatReducer, {
+        messages: [],
+        isChatOpen: false,
+    })
     const [shareScreenId, setShareScreenId] = useState<string>("")
     const [isUserSharingScreen, setIsUserSharingScreen] = useState<boolean>(false)
     const [isPeerSharingScreen, setIsPeerSharingScreen] = useState<boolean>(false)
@@ -61,6 +68,28 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
         }
     }
 
+    const sendMessage = (message: string) => {
+        const messageData: IMessage = {
+            content: message,
+            timestamp: new Date().getTime(),
+            author: user?.id, 
+        }
+        chatDispatch(addMessageAction(messageData))
+        ws.emit('send-message', roomId, messageData)
+    }
+
+    const addMessage = (message: IMessage) => {
+        chatDispatch(addMessageAction(message))
+    }
+
+    const addHistory = (messages: IMessage[]) => {
+        chatDispatch(addHistoryAction(messages))
+    }
+
+    const toggleChat = () => {
+        chatDispatch(toggleChatAction(!chats.isChatOpen))
+    }
+
     useEffect(() => {
         const userId = uuidV4()
         const peer = new Peer(userId)
@@ -93,6 +122,8 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
             setIsPeerSharingScreen(false)
             setShareScreenId("")
         })
+        ws.on('add-message', addMessage)
+        ws.on('get-messages', addHistory)
 
         return () => {
             ws.off("room-created");
@@ -101,6 +132,8 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
             ws.off("user-shared-screen");
             ws.off("user-stopped-sharing");
             ws.off("user-joined");
+            ws.off("add-message");
+            ws.off("get-messages");
         };
     }, []) 
 
@@ -140,9 +173,22 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
     }, [user, stream])
 
     const isSharingScreen = isUserSharingScreen || isPeerSharingScreen
+    const value = {
+        ws, 
+        user, 
+        stream, 
+        peers, 
+        chats,
+        shareScreenId, 
+        isSharingScreen, 
+        shareScreen, 
+        setRoomId, 
+        sendMessage,
+        toggleChat,
+    }
 
     return(
-        <RoomContext.Provider value={{ ws, user, stream, peers, shareScreenId, isSharingScreen, shareScreen, setRoomId }}>
+        <RoomContext.Provider value={value}>
             {children}
         </RoomContext.Provider>
     )
