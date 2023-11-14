@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom"
 import { RoomContext } from "../context/RoomContext"
 import { VideoPlayer } from "../components/VideoPlayer"
 import { ShareScreenButton } from "../components/ShareScreenButton"
+import { ChatButton } from "../components/ChatButton"
+import { Chat } from "../components/chat/Chat"
 
 export const Room = () => {
     const { roomId } = useParams()
@@ -24,9 +26,9 @@ export const Room = () => {
     console.log(screenShareVideo)
 
     return(
-        <>
-            <div>Room Id: {roomId}</div>
-            <div className="flex">
+        <div className="flex flex-col min-h-screen">
+            <div className="bg-red-500 p-4 text-white">Room Id: {roomId}</div>
+            <div className="flex grow">
                 {
                     screenShareVideo &&
                     <div className="w-4/5 pr-4">
@@ -41,10 +43,14 @@ export const Room = () => {
                         })
                     }
                 </div>
+                <div className="border-l-2 pb-28">
+                    <Chat />
+                </div>
             </div>
-            <div className="fixed bottom-0 p-6 w-full flex justify-center border-t-2 bg-white">
+            <div className="h-28 fixed bottom-0 p-6 w-full flex items-center justify-center border-t-2 bg-white">
                 <ShareScreenButton onClick={shareScreen}/>
+                <ChatButton onClick={() => {}}/>
             </div>
-        </>
+        </div>
     )
 }

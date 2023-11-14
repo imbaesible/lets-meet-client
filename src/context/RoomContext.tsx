@@ -1,7 +1,7 @@
 import { createContext, useEffect, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socketIOClient from "socket.io-client";
-import Peer, { PeerConnectOption } from "peerjs";
+import Peer from "peerjs";
 import { v4 as uuidV4 } from "uuid";
 import { peersReducer } from "./peerReducer";
 import { addPeerAction, removePeerAction } from "./peerActions";
