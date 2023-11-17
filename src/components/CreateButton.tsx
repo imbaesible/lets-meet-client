@@ -4,10 +4,10 @@ import { NameInput } from "../common/Name"
 
 export const Create: React.FC = () => {
 
-    const { ws, user } = useContext(RoomContext)
+    const { ws, user, currentUserId, userId, userName } = useContext(RoomContext)
 
     const createRoom = () => {
-        ws.emit("create-room", { peerId: user._id })
+        ws.emit("create-room", { peerId: currentUserId, userName })
     }
 
     return(

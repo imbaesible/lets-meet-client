@@ -4,7 +4,7 @@ export const VideoPlayer: React.FC<{stream : MediaStream; className?: string;}> 
     const videoRef = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
-        videoRef!.current!.srcObject = stream
+        if(stream) videoRef!.current!.srcObject = stream
     }, [stream])
 
     return(

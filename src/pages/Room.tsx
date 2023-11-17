@@ -5,6 +5,7 @@ import { VideoPlayer } from "../components/VideoPlayer"
 import { ShareScreenButton } from "../components/ShareScreenButton"
 import { ChatButton } from "../components/ChatButton"
 import { Chat } from "../components/chat/Chat"
+import { NameInput } from "../common/Name"
 
 export const Room = () => {
     const { roomId } = useParams()
@@ -22,19 +23,11 @@ export const Room = () => {
     } = useContext(RoomContext)
 
     useEffect(() => {
-        user?.on("open", () => {
-            ws.emit("join-room", { roomId, peerId: user._id });
-        });
-    }, [roomId, user, ws])
-
-    useEffect(() => {
         setRoomId(roomId)
     }, [roomId, setRoomId])
 
     const screenShareVideo = shareScreenId === user?.id ? stream : peers[shareScreenId]?.stream
     const { [shareScreenId]: sharing, ...peersToShow} = peers
-
-    console.log(screenShareVideo)
 
     return(
         <div className="flex flex-col min-h-screen">
@@ -47,10 +40,21 @@ export const Room = () => {
                     </div>
                 }
                 <div className={`grid gap-4 ${isSharingScreen ?  "w-1/5 grid-cols-1" : "grid-cols-4"}`}>
-                    {shareScreenId !== user?.id && <VideoPlayer className="me" key={"me"} stream={stream} />}
                     {
-                        Object.values(peersToShow).map((peer: any) => {
-                            return(<VideoPlayer key={peer.id} stream={peer.stream}/>)
+                        shareScreenId !== user?.id && 
+                        <div>
+                            <VideoPlayer className="me" key={"me"} stream={stream} />
+                            <NameInput />
+                        </div>
+                    }
+                    {
+                        Object.values(peersToShow).filter((peer: any) => !!peer.stream).map((peer: any) => {
+                            return(
+                                <div>
+                                    <VideoPlayer key={peer.id} stream={peer.stream}/>
+                                    <div>{peer.userName}</div>
+                                </div>
+                            )
                         })
                     }
                 </div>
