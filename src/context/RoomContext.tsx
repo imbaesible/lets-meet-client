@@ -30,7 +30,7 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
         isChatOpen: false,
     })
     const [shareScreenId, setShareScreenId] = useState<string>("")
-    const [isUserSharingScreen, setIsUserSharingScreen] = useState<boolean>(false)
+    const [isUserSharingScreen, setIsUserSharingScreen] = useState<number | null>(null)
     const [isPeerSharingScreen, setIsPeerSharingScreen] = useState<boolean>(false)
     const [roomId, setRoomId] = useState<string>("")
 
@@ -46,14 +46,18 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
         dispatch(removePeerAction(peerId))
     }
 
-    const switchScreen = (stream: MediaStream) => {
-        setStream(stream)
+    const switchScreen = (mediaStream: MediaStream) => {
+        if(stream){
+            stream.getTracks().forEach(track => track.stop())
+        }
+        setStream(mediaStream)
         setShareScreenId(user?.id || "")
-        setIsUserSharingScreen(!isUserSharingScreen)
+        //if user is sharing screen, then switch to camera
+        isUserSharingScreen === 1 ? setIsUserSharingScreen(0) : setIsUserSharingScreen(1)
 
         //for sharing your stream (Screen || Video) with other users
         Object.values(user?.connections).forEach((connection: any) => {
-            const videoTrack = stream?.getTracks().find((track) => track.kind === 'video')
+            const videoTrack = mediaStream?.getTracks().find((track) => track.kind === 'video')
             connection[0]
                 .peerConnection
                 .getSenders()[1]
@@ -62,11 +66,17 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
         })
     }
 
-    const shareScreen = () => {
-        if(isSharingScreen){
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true}).then(switchScreen)
-        } else {
-            navigator.mediaDevices.getDisplayMedia({}).then(switchScreen)
+    const shareScreen = async () => {
+        try{
+            if(isUserSharingScreen === 1){
+                const userMediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true})
+                switchScreen(userMediaStream)
+            } else {
+                const displayMediaStream = await navigator.mediaDevices.getDisplayMedia({})
+                switchScreen(displayMediaStream)
+            }
+        } catch (err) {
+            console.error(err)
         }
     }
 
@@ -160,19 +170,16 @@ export const RoomProvider: React.FunctionComponent<Props> = ({children}) => {
     }, []) 
 
     useEffect(() => {
-        if(!isPeerSharingScreen){
-            if(isUserSharingScreen && shareScreenId){
-                ws.emit('start-sharing', {
-                    peerId: shareScreenId,
-                    roomId,
-                })
-            } else {
-                ws.emit('stop-sharing')
-            }
-        } else {
-            //your peer is already sharing the screen
+        if(isUserSharingScreen === 1){
+            ws.emit('start-sharing', {
+                peerId: shareScreenId,
+                roomId,
+            }) 
+        } else if (isUserSharingScreen === 0) {
+            ws.emit('stop-sharing', roomId)
+            setIsUserSharingScreen(null)
         }
-    }, [isUserSharingScreen, isPeerSharingScreen, shareScreenId, roomId])
+    }, [isUserSharingScreen, shareScreenId, roomId])
 
     useEffect(() => {
         if(!user || !stream) return;
